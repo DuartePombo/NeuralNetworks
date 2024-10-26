@@ -20,7 +20,7 @@ void initialize_weights(){
   // initialize Input and hidden layer weights to random values between -1 and 1.
   for(int i=0; i<INPUT_SIZE; i++){
     for(int j=0; j<HIDDEN_SIZE; j++){
-      weights_input_hidden[i][j] = = ((double)rand()/RAND_MAX)*2.0 - 1.0;
+      weights_input_hidden[i][j] = ((double)rand()/RAND_MAX)*2.0 - 1.0;
     }
   }
 
@@ -58,7 +58,7 @@ double relu(double x){
 }
 
 double relu_derivative(double x){
-  return z>0? 1:0;
+  return x>0? 1:0;
 }
 
 // transforms the logits in the final output layer, to the softmax probability values.
@@ -93,7 +93,7 @@ void forward_pass(double *input, double *hidden_output, double *final_output) {
   // Outpuyt layer:
 
   for(int i=0; i<OUTPUT_SIZE;i++){
-    final_output[i]+=0.0 //initalize output at 0
+    final_output[i]+=0.0; //initalize output at 0
     for(int j=0; j<HIDDEN_SIZE;j++){
         
       final_output[i] = final_output[i] + hidden_output[j]*weights_hidden_output[j][i];
@@ -157,4 +157,44 @@ void backward_pass(double *input, double *hidden_output, double *final_ouput, do
 
 }
 
+void train(double **inputs, double **targets, int num_samples, int epochs) {
+    double hidden_output[HIDDEN_SIZE];
+    double final_output[OUTPUT_SIZE];
 
+    for (int epoch = 0; epoch < epochs; epoch++) {
+        for (int i = 0; i < num_samples; i++) {
+            forward_pass(inputs[i], hidden_output, final_output);
+            backward_pass(inputs[i], hidden_output, final_output, targets[i]);
+        }
+        printf("Epoch %d complete\n", epoch + 1);
+    }
+}
+
+
+
+int predict(double *input) {
+    double hidden_output[HIDDEN_SIZE];
+    double final_output[OUTPUT_SIZE];
+
+    forward_pass(input, hidden_output, final_output);
+
+    int predicted_label = 0;
+    double max_prob = final_output[0];
+    for (int i = 1; i < OUTPUT_SIZE; i++) {
+        if (final_output[i] > max_prob) {
+            max_prob = final_output[i];
+            predicted_label = i;
+        }
+    }
+    return predicted_label;
+}
+
+
+
+
+int main() {
+
+
+
+  return 0;
+}
