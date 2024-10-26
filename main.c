@@ -76,4 +76,31 @@ void softmax(double *output, int size){
 
 }
 
+void forward_pass(double *input, double *hidden_output, double *final_output) {
 
+  //hidden layer calculations
+  for (int i=0; i<HIDDEN_SIZE; i++){
+    
+    hidden_output[i] = 0.0; //initialize output at 0
+
+    for (int j=0; j<INPUT_SIZE; j++){
+      hidden_output[i] = hidden_output[i] + weights_input_hidden[j][i]*input[j]; //input weight for neuron j connected to hidden neuron i, this is hidden output before activation function, and it is the summation of all the weights connected to that particular neuron from all the inputs.
+    }
+    hidden_output[i] = hidden_output[i] + bias_hidden[i]; // add the constant term
+    hidden_output[i] = relu(hidden_output[i]); // pass it through activation function
+  }
+
+  // Outpuyt layer:
+
+  for(int i=0; i<OUTPUT_SIZE;i++){
+    final_output[i]+=0.0 //initalize output at 0
+    for(int j=0; j<HIDDEN_SIZE;j++){
+        
+      final_output[i] = final_output[i] + hidden_output[j]*weights_hidden_output[j][i];
+    }
+    final_output[i]+=bias_output[i];
+  }
+
+  softmax(final_output, OUTPUT_SIZE);
+
+}
