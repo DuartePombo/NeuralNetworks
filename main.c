@@ -226,7 +226,27 @@ void one_hot_encode(int label, double *output) {
 
 
 
-int main() {
+void save_model(const char *filename) {
+    FILE *file = fopen(filename, "wb");
+    if (!file) {
+        printf("Error: Could not open file for saving weights!\n");
+        return;
+    }
+
+    // Save input to hidden weights
+    fwrite(weights_input_hidden, sizeof(double), INPUT_SIZE * HIDDEN_SIZE, file);
+    // Save hidden to output weights
+    fwrite(weights_hidden_output, sizeof(double), HIDDEN_SIZE * OUTPUT_SIZE, file);
+    // Save hidden layer biases
+    fwrite(bias_hidden, sizeof(double), HIDDEN_SIZE, file);
+    // Save output layer biases
+    fwrite(bias_output, sizeof(double), OUTPUT_SIZE, file);
+
+    fclose(file);
+    printf("Model saved to %s\n", filename);
+}
+
+int main(int argc, char *argv[]) {
     // Load the MNIST dataset
     printf("Loading MNIST dataset...\n");
     load_mnist();
@@ -265,6 +285,20 @@ int main() {
     for (int i = 0; i < num_samples; i++) {
         free(targets_pointers[i]);
     }
+
+
+    // Check for the --save flag in the command line arguments
+    int save_model_flag = 0;
+    if (argc > 1 && strcmp(argv[1], "--save") == 0) {
+        save_model_flag = 1;
+    }
+
+    if (save_model_flag) {
+        printf("Saving weights to 'trained_model.bin'\n\n");
+        save_model("trained_model.bin");
+    }
+
+
 
     // ---------------------- Test the Model ----------------------
 
