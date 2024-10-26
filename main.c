@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-
+#include "mnist.h"
 // parameters for the MNIST dataset: Input size = 28x28 pixels, with an hidden layer of 128 neurons, output = 10, to classify numbers between 0 and 9.
 #define INPUT_SIZE 784 
 #define HIDDEN_SIZE 128
@@ -93,7 +93,7 @@ void forward_pass(double *input, double *hidden_output, double *final_output) {
   // Outpuyt layer:
 
   for(int i=0; i<OUTPUT_SIZE;i++){
-    final_output[i]+=0.0; //initalize output at 0
+    final_output[i] = 0.0; //initalize output at 0
     for(int j=0; j<HIDDEN_SIZE;j++){
         
       final_output[i] = final_output[i] + hidden_output[j]*weights_hidden_output[j][i];
@@ -105,7 +105,7 @@ void forward_pass(double *input, double *hidden_output, double *final_output) {
 
 }
 
-void backward_pass(double *input, double *hidden_output, double *final_ouput, double *target){
+void backward_pass(double *input, double *hidden_output, double *final_output, double *target){
   double output_error[OUTPUT_SIZE];
   double hidden_error[HIDDEN_SIZE];
 
@@ -190,11 +190,66 @@ int predict(double *input) {
 }
 
 
+// The mnist labels are stored as integers 0 to 9, but we are expecting one hot enconding.
+// This function converts the labels to one hot enconding.
+void one_hot_encode(int label, double *output) {
+    for (int i = 0; i < OUTPUT_SIZE; i++) {
+        output[i] = (i == label) ? 1.0 : 0.0;
+    }
+}
+
 
 
 int main() {
+    // Load the MNIST dataset
+    load_mnist();
 
+    int epochs = 10;
+    int num_samples = NUM_TRAIN;
+    int num_test_samples = NUM_TEST; // For testing
+    
+    // Prepare pointers for the training data
+    double *inputs_pointers[NUM_TRAIN];
+    double *targets_pointers[NUM_TRAIN];
+    
+    // Temporary array for one-hot encoding
+    double one_hot[OUTPUT_SIZE];
 
+    for (int i = 0; i < num_samples; i++) {
+        inputs_pointers[i] = train_image[i];
 
-  return 0;
+        // One-hot encode the training labels
+        one_hot_encode(train_label[i], one_hot);
+        targets_pointers[i] = malloc(OUTPUT_SIZE * sizeof(double));
+        memcpy(targets_pointers[i], one_hot, OUTPUT_SIZE * sizeof(double));
+    }
+
+    // Initialize weights
+    initialize_weights();
+
+    // Train the neural network
+    train(inputs_pointers, targets_pointers, num_samples, epochs);
+
+    // Free allocated memory for one-hot labels
+    for (int i = 0; i < num_samples; i++) {
+        free(targets_pointers[i]);
+    }
+
+    // ---------------------- Test the Model ----------------------
+
+    int correct_predictions = 0;
+
+    for (int i = 0; i < num_test_samples; i++) {
+        int predicted_label = predict(test_image[i]);
+        if (predicted_label == test_label[i]) {
+            correct_predictions++;
+        }
+    }
+
+    // Calculate and print the accuracy
+    double accuracy = (double)correct_predictions / num_test_samples * 100.0;
+    printf("Test Accuracy: %.2f%%\n", accuracy);
+
+    return 0;
 }
+
