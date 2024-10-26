@@ -3,7 +3,7 @@
 #include <math.h>
 #include "mnist.h"
 // parameters for the MNIST dataset: Input size = 28x28 pixels, with an hidden layer of 128 neurons, output = 10, to classify numbers between 0 and 9.
-#define INPUT_SIZE 784 
+#define INPUT_SIZE 784 // 28*28 = 784 
 #define HIDDEN_SIZE 128
 #define OUTPUT_SIZE 10
 #define LEARNING_RATE 0.01
@@ -15,8 +15,28 @@ double bias_hidden[HIDDEN_SIZE];
 double bias_output[OUTPUT_SIZE];
 
 
-void initialize_weights(){
 
+// Function to print a progress bar during training
+void print_progress_bar(int current, int total) {
+    int bar_width = 50;
+    float progress = (float)current / total;
+    
+    printf("[");
+    int pos = bar_width * progress;
+    for (int i = 0; i < bar_width; ++i) {
+        if (i < pos) printf("=");
+        else if (i == pos) printf(">");
+        else printf(" ");
+    }
+    printf("] %d%%\r", (int)(progress * 100));
+    fflush(stdout); // Force the output to be displayed
+}
+
+
+
+
+void initialize_weights(){
+  printf("Initializing weights...\n");
   // initialize Input and hidden layer weights to random values between -1 and 1.
   for(int i=0; i<INPUT_SIZE; i++){
     for(int j=0; j<HIDDEN_SIZE; j++){
@@ -40,7 +60,7 @@ void initialize_weights(){
   for(int i=0; i<OUTPUT_SIZE; i++){
     bias_output[i] = ((double)rand()/RAND_MAX) * 2.0 - 1.0;
   }
-
+  printf("Weights initialization complete.\n\n");
 }
 
 // sigmoid activation function
@@ -106,6 +126,7 @@ void forward_pass(double *input, double *hidden_output, double *final_output) {
 }
 
 void backward_pass(double *input, double *hidden_output, double *final_output, double *target){
+
   double output_error[OUTPUT_SIZE];
   double hidden_error[HIDDEN_SIZE];
 
@@ -157,20 +178,25 @@ void backward_pass(double *input, double *hidden_output, double *final_output, d
 
 }
 
+
 void train(double **inputs, double **targets, int num_samples, int epochs) {
     double hidden_output[HIDDEN_SIZE];
     double final_output[OUTPUT_SIZE];
 
     for (int epoch = 0; epoch < epochs; epoch++) {
+        printf("Epoch %d/%d started...\n", epoch + 1, epochs);
+
         for (int i = 0; i < num_samples; i++) {
+            // Update progress bar for this epoch
+            print_progress_bar(i + 1, num_samples);
+
             forward_pass(inputs[i], hidden_output, final_output);
             backward_pass(inputs[i], hidden_output, final_output, targets[i]);
         }
-        printf("Epoch %d complete\n", epoch + 1);
+
+        printf("\nEpoch %d complete\n\n", epoch + 1);
     }
 }
-
-
 
 int predict(double *input) {
     double hidden_output[HIDDEN_SIZE];
@@ -202,7 +228,9 @@ void one_hot_encode(int label, double *output) {
 
 int main() {
     // Load the MNIST dataset
+    printf("Loading MNIST dataset...\n");
     load_mnist();
+    printf("MNIST dataset loaded.\n\n");
 
     int epochs = 10;
     int num_samples = NUM_TRAIN;
@@ -215,6 +243,8 @@ int main() {
     // Temporary array for one-hot encoding
     double one_hot[OUTPUT_SIZE];
 
+
+    printf("Preparing training data...\n");
     for (int i = 0; i < num_samples; i++) {
         inputs_pointers[i] = train_image[i];
 
@@ -224,6 +254,7 @@ int main() {
         memcpy(targets_pointers[i], one_hot, OUTPUT_SIZE * sizeof(double));
     }
 
+    printf("Training data preparation complete.\n\n");
     // Initialize weights
     initialize_weights();
 
@@ -237,6 +268,8 @@ int main() {
 
     // ---------------------- Test the Model ----------------------
 
+    printf("Testing the model...\n\n");
+
     int correct_predictions = 0;
 
     for (int i = 0; i < num_test_samples; i++) {
@@ -248,7 +281,7 @@ int main() {
 
     // Calculate and print the accuracy
     double accuracy = (double)correct_predictions / num_test_samples * 100.0;
-    printf("Test Accuracy: %.2f%%\n", accuracy);
+    printf("Test Accuracy: %.2f%%\n\n", accuracy);
 
     return 0;
 }
