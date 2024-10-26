@@ -104,3 +104,57 @@ void forward_pass(double *input, double *hidden_output, double *final_output) {
   softmax(final_output, OUTPUT_SIZE);
 
 }
+
+void backward_pass(double *input, double *hidden_output, double *final_ouput, double *target){
+  double output_error[OUTPUT_SIZE];
+  double hidden_error[HIDDEN_SIZE];
+
+  // get error
+  for(int i=0; i<OUTPUT_SIZE; i++){
+  
+  // We are using MSE as the loss function. The gradient (or derivative) of MSE with respect to the output
+  // is simply (output - target). This gradient indicates the direction in which the weights should be adjusted to reduce the loss.
+  // In backpropagation, we want to minimize the loss function by adjusting the weights of the neural network. To do this, we need to calculate
+  // how much ecah output neuron contributes to the overal error. This contribution is what we call here by the output error. 
+  // The outpout error tells us how far the model's predictions are from the true values and we further use this to adjust the weights.
+
+    output_error[i] = final_output[i] - target[i]; 
+  }
+
+  // Backpropagation to the hidden layer:
+  // We are going to compute how much each hidden neuron contributed to the overall error in the output layer.
+  for(int i=0; i<HIDDEN_SIZE; i++){
+    hidden_error[i] = 0.0;
+    for(int j=0; j<OUTPUT_SIZE; j++){
+      hidden_error[i] += output_error[j]*weights_hidden_output[i][j]; //sum the contribution of each output error. The error contribution of each output neuron j is scaled by the corresponding weight. This gives the total error contribution of the hidden neuron i to all the output neurons.
+    }
+    hidden_error[i] = hidden_error[i]*relu_derivative(hidden_output[i]); //since relu derivative is 1 for x>0, 0 otherwise, if the neuron was active, the error will propagate back. Only the neurons that were active during the forward pass are updated during back prop.
+
+  }
+  
+
+  // updae the weights and biases between hidden and output layer
+  for (int i=0; i<HIDDEN_SIZE; i++){
+    for(int j=0; j<OUTPUT_SIZE; j++){
+      weights_hidden_output[i][j] = weights_hidden_output[i][j] - (LEARNING_RATE * output_error[j] * hidden_output[i]);
+    }
+  }
+
+  for(int i = 0; i<OUTPUT_SIZE; i++){
+    bias_output[i] = bias_output[i] - (LEARNING_RATE*output_error[i]);
+  }
+
+
+  // Finally update weights and biases between input and hidden layer
+  for (int i = 0; i < INPUT_SIZE; i++) {
+      for (int j = 0; j < HIDDEN_SIZE; j++) {
+          weights_input_hidden[i][j] -= LEARNING_RATE * hidden_error[j] * input[i];
+      }
+  }
+  for (int i = 0; i < HIDDEN_SIZE; i++) {
+      bias_hidden[i] -= LEARNING_RATE * hidden_error[i];
+  }
+
+}
+
+
